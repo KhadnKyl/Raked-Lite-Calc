@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f1720" />
+<meta name="mobile-web-app-capable" content="yes" />
+<title>Bradnam's 52mm & 100mm Raked Fixed Lite Calculator — Workshop v1.1</title>
+<style>
+  :root{
+    --bg:#0f1720;
+    --panel:#17212b;
+    --panel2:#1d2a35;
+    --line:#334454;
+    --text:#edf4f7;
+    --muted:#9fb1bf;
+    --accent:#3fb6d3;
+    --good:#56c596;
+    --warn:#f2bd5b;
+    --bad:#ef7777;
+    --input:#101820;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:linear-gradient(180deg,#0d141b,#111c25 35%,#0f1720);
+    color:var(--text);
+    touch-action:manipulation;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:24px}
+  h1{font-size:clamp(25px,4vw,42px);margin:0 0 6px;letter-spacing:-.03em}
+  h2{font-size:20px;margin:0 0 14px}
+  h3{font-size:15px;margin:0 0 10px;color:#dfeaf0}
+  .sub{color:var(--muted);margin-bottom:20px}
+  .notice{
+    border:1px solid #356f5b;background:#172b25;color:#bcebd9;
+    padding:13px 15px;border-radius:12px;margin-bottom:18px;line-height:1.45
+  }
+  .notice b{color:#e9fff7}
+  .grid{display:grid;grid-template-columns:390px 1fr;gap:18px}
+  .card{
+    background:rgba(23,33,43,.96);border:1px solid var(--line);
+    border-radius:15px;padding:18px;box-shadow:0 8px 28px rgba(0,0,0,.17)
+  }
+  .field{margin:0 0 13px}
+  label{display:block;font-size:13px;color:#bdcbd5;margin-bottom:6px}
+  input,select{
+    width:100%;padding:11px 12px;min-height:48px;border-radius:9px;border:1px solid #405363;
+    background:var(--input);color:var(--text);font-size:16px;outline:none;
+  }
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(63,182,211,.11)}
+  .series{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px}
+  .series button,.btn{
+    min-height:48px;padding:11px 13px;border-radius:9px;border:1px solid #405363;background:#182631;
+    color:var(--text);cursor:pointer;font-weight:650
+  }
+  .series button.active{background:#164b59;border-color:#3fb6d3}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn:hover,.series button:hover{filter:brightness(1.08)}
+  .small{font-size:12px;color:var(--muted);line-height:1.5}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .results{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .result{
+    background:var(--panel2);border:1px solid #344858;border-radius:11px;padding:12px;
+    min-height:78px
+  }
+  .result .k{font-size:12px;color:var(--muted);margin-bottom:5px}
+  .result .v{font-size:22px;font-weight:750;letter-spacing:-.02em}
+  .result .u{font-size:12px;color:var(--muted);margin-left:3px}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+    border-radius:999px;padding:4px 8px;margin-top:7px}
+  .documented{background:rgba(86,197,150,.12);color:#7fe0b7;border:1px solid rgba(86,197,150,.35)}
+  .confirmed{background:rgba(63,182,211,.13);color:#8edff0;border:1px solid rgba(63,182,211,.38)}
+  .derived{background:rgba(242,189,91,.10);color:#f4cc7c;border:1px solid rgba(242,189,91,.35)}
+  .unknown{background:rgba(239,119,119,.10);color:#f39a9a;border:1px solid rgba(239,119,119,.35)}
+  .section{margin-top:16px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:9px 8px;border-bottom:1px solid #314351;text-align:left;vertical-align:top}
+  th{color:#9fb1bf;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .diagram{
+    background:#0f171e;border:1px solid #314351;border-radius:12px;padding:10px;
+    min-height:310px;display:flex;align-items:center;justify-content:center
+  }
+  svg{width:100%;height:auto;max-height:340px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;color:var(--muted);font-size:12px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px}
+  .validation{margin-top:12px;padding:10px 12px;border-radius:9px;font-size:13px}
+  .validation.ok{background:rgba(86,197,150,.09);border:1px solid rgba(86,197,150,.25);color:#a3ebcb}
+  .validation.warn{background:rgba(242,189,91,.09);border:1px solid rgba(242,189,91,.3);color:#f1d28e}
+  .validation.bad{background:rgba(239,119,119,.09);border:1px solid rgba(239,119,119,.3);color:#f3a2a2}
+  .sourcebox{margin-top:18px;color:#aebfc9;font-size:12px;line-height:1.55}
+  .mono{font-family:Consolas,Menlo,monospace}
+  .cuttable td:nth-child(2){font-size:17px;font-weight:800;color:#f2fbff;white-space:nowrap}
+  .cutcall{color:#d7e6ee;line-height:1.4}
+  .rulebox{
+    margin-top:12px;background:#101b23;border:1px solid #365365;border-radius:10px;
+    padding:11px 12px;color:#b8ccd8;font-size:12px;line-height:1.55
+  }
+  footer{color:#78909d;font-size:11px;text-align:center;padding:22px 0 5px}
+  @media(max-width:850px){
+    .grid{grid-template-columns:1fr}
+    .results{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:540px){
+    .wrap{padding:12px}
+    .card{padding:14px;border-radius:12px}
+    .two,.three,.results{grid-template-columns:1fr}
+    .btnrow{display:grid;grid-template-columns:1fr}
+    .series{grid-template-columns:1fr 1fr}
+    .result .v{font-size:20px}
+    .diagram{min-height:250px}
+    table.cuttable, .cuttable tbody, .cuttable tr, .cuttable td{display:block;width:100%}
+    .cuttable thead{display:none}
+    .cuttable tr{border:1px solid #314351;border-radius:10px;margin:0 0 10px;padding:9px}
+    .cuttable td{border:0;padding:3px 0}
+    .cuttable td:first-child{color:#9fb1bf;font-size:12px}
+    .cuttable td:nth-child(2){font-size:21px}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    .wrap{max-width:none}
+    .card{background:#fff;color:#111;box-shadow:none;border-color:#ccc}
+    .inputs,.btnrow,.sourcebox,.notice{display:none!important}
+    .grid{grid-template-columns:1fr}
+    .result{background:#fff;color:#111;border-color:#ccc}
+    .result .k,.small,th,.legend,footer{color:#555}
+    td{border-color:#ddd}
+  }
+
+  .cutSketchGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .cutSketch{
+    background:#101b23;border:1px solid #365365;border-radius:12px;padding:10px
+  }
+  .cutSketch h3{margin:0 0 8px;font-size:14px;color:#e7f2f6}
+  .cutSketch .caption{font-size:12px;color:#a9bfca;line-height:1.45;margin-top:6px}
+  .cutSketch svg{width:100%;height:auto;display:block}
+  .cutSketch .caption b{color:#e6f4fa}
+  @media(max-width:700px){
+    .cutSketchGrid{grid-template-columns:1fr}
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bradnam's Raked Fixed Lite Calculator</h1>
+  <div class="sub">52 mm Essential &amp; 100 mm Signature — workshop build v1.1</div>
+
+  <div class="notice">
+    <b>Merged workshop version.</b>
+    This keeps the v0.4 dark layout and components/glass sections, and adds the cutting directions and
+    long-point / short-point callouts developed from the workshop examples. Sill is now fixed at
+    <b>overall width − 52 mm</b>. The raked glass section remains a working derived model.
+  </div>
+
+  <div class="grid">
+    <div class="inputs">
+      <div class="card">
+        <h2>Inputs</h2>
+        <label>Frame series</label>
+        <div class="series">
+          <button id="s52" onclick="setSeries(52)">52 mm Essential</button>
+          <button id="s100" class="active" onclick="setSeries(100)">100 mm Signature</button>
+        </div>
+
+        <div class="field">
+          <label for="width">Overall frame width (mm)</label>
+          <input id="width" type="number" min="1" step="0.1" value="901">
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label for="leftH">Left overall height (mm)</label>
+            <input id="leftH" type="number" min="1" step="0.1" value="1463">
+          </div>
+          <div class="field">
+            <label f
