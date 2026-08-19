@@ -1,0 +1,126 @@
+erHTML =
+    `Head: <b>${fmt(outerRake)} − (${headBaseDeduction} ÷ cos ${fmt(angle,1)}°) = ${fmt(headCut)} mm</b>. ` +
+    `Sill: <b>${fmt(W)} − 52 = ${fmt(sillCut)} mm</b>. ` +
+    `50 mm angle offset reference: <b>${fmt(angleOffset)} mm</b>.`;
+
+  document.getElementById('glassW').textContent=fmt(GW);
+  document.getElementById('glassLH').textContent=fmt(GLH);
+  document.getElementById('glassRH').textContent=fmt(GRH);
+  document.getElementById('glassRake').textContent=fmt(GR);
+  document.getElementById('glassArea').textContent=fmt(glassArea,3);
+  document.getElementById('blockLoc').textContent=`${blockMode} mm from sill ends`;
+
+  if(series===52){
+    document.getElementById('framePart').textContent="BK201 (3546) — FRAME EXT 52";
+    document.getElementById('jambPart').textContent="BK205 (3550) — JAMB EXT 52";
+    document.getElementById('gasketPart').textContent="86155 — GASKET HEAD-SILL 14 XFL 52";
+    document.getElementById('cropPart').textContent="41 mm standard jamb crop (machining)";
+  } else {
+    document.getElementById('framePart').textContent="BS203 (3473) — FRAME 100";
+    document.getElementById('jambPart').textContent="BS203 (3473) — FRAME 100 (std fixed-lite frame)";
+    document.getElementById('gasketPart').textContent="85720-1 / 85720-2 — GASKET EXT FL JAMB 100";
+    document.getElementById('cropPart').textContent="52 mm standard jamb crop (machining)";
+  }
+  document.getElementById('beadPart').textContent=beadFor(t);
+  document.getElementById('wedgePart').textContent=wedgeMap[String(t)] || "Check manual";
+  document.getElementById('blockPart').textContent=blockFor(t);
+
+  let msg="Dimensions ready.";
+  let cls="ok";
+  if(W<1||LH<1||RH<1){msg="Check frame dimensions.";cls="bad";}
+  if(GW<=0||GLH<=0||GRH<=0){msg="The provisional glass model produces a non-positive dimension. Check inputs / offset.";cls="warn";}
+  setValidation(msg,cls);
+  drawShape(W,LH,RH,S,GW,GLH,GRH);
+  renderCutSketches(angle, signedRise, headCut, sillCut, LH, RH);
+}
+
+function setValidation(msg,cls){
+  const v=document.getElementById('validation');
+  v.textContent=msg; v.className='validation '+cls;
+}
+
+function drawShape(W,LH,RH,S,GW,GLH,GRH){
+  const svg=document.getElementById('shape');
+  const pad=62, vw=720, vh=340;
+  const maxH=Math.max(LH,RH);
+  const sx=(vw-2*pad)/W;
+  const sy=(vh-2*pad)/maxH;
+  const sc=Math.min(sx,sy);
+  const x0=(vw-W*sc)/2;
+  const yBase=vh-pad/2;
+  const p=(x,y)=>`${(x0+x*sc).toFixed(1)},${(yBase-y*sc).toFixed(1)}`;
+  const framePts=[p(0,0),p(W,0),p(W,RH),p(0,LH)].join(' ');
+  let glassPts="";
+  if(GW>0&&GLH>0&&GRH>0){
+    glassPts=[p(S,S),p(W-S,S),p(W-S,S+GRH),p(S,S+GLH)].join(' ');
+  }
+
+  const highLabel = LH>RH ? "LONG" : LH<RH ? "SHORT" : "";
+  const rightLabel = LH>RH ? "SHORT" : LH<RH ? "LONG" : "";
+
+  svg.innerHTML=`
+    <polygon points="${framePts}" fill="rgba(63,182,211,.08)" stroke="#7fd3e4" stroke-width="4" stroke-linejoin="round"/>
+    ${glassPts?`<polygon points="${glassPts}" fill="rgba(243,197,107,.08)" stroke="#f3c56b" stroke-width="3" stroke-dasharray="8 5" stroke-linejoin="round"/>`:''}
+    <text x="${x0+W*sc/2}" y="${yBase+30}" text-anchor="middle" fill="#a9bbc6" font-size="15">${fmt(W,0)} mm</text>
+    <text x="${x0-14}" y="${yBase-LH*sc/2}" text-anchor="end" fill="#a9bbc6" font-size="14">LH ${fmt(LH,0)}</text>
+    <text x="${x0+W*sc+14}" y="${yBase-RH*sc/2}" text-anchor="start" fill="#a9bbc6" font-size="14">RH ${fmt(RH,0)}</text>
+    ${LH>RH
+      ? `<text x="${x0+10}" y="${Math.max(28,yBase-LH*sc-12)}" text-anchor="start" fill="#8edff0" font-size="12">${highLabel}</text>
+         <text x="${x0+W*sc+14}" y="${Math.max(28,yBase-RH*sc-12)}" text-anchor="start" fill="#8edff0" font-size="12">${rightLabel}</text>`
+      : LH<RH
+      ? `<text x="${x0-14}" y="${Math.max(28,yBase-LH*sc-12)}" text-anchor="end" fill="#8edff0" font-size="12">${highLabel}</text>
+         <text x="${x0+W*sc-10}" y="${Math.max(28,yBase-RH*sc-12)}" text-anchor="end" fill="#8edff0" font-size="12">${rightLabel}</text>`
+      : ""}
+    <text x="${x0+W*sc/2}" y="26" text-anchor="middle" fill="#d9e5eb" font-size="13">Overall sizes — preview only</text>
+  `;
+}
+
+function swapHeights(){
+  const a=document.getElementById('leftH'),b=document.getElementById('rightH');
+  const t=a.value; a.value=b.value; b.value=t; calc();
+}
+function load901(){
+  setSeries(100);
+  document.getElementById('width').value=901;
+  document.getElementById('leftH').value=1463;
+  document.getElementById('rightH').value=928;
+  calc();
+}
+function load907(){
+  setSeries(100);
+  document.getElementById('width').value=907;
+  document.getElementById('leftH').value=130;
+  document.getElementById('rightH').value=638;
+  calc();
+}
+function copyResults(){
+  const txt=[
+    `Bradnam's Raked Fixed Lite — Workshop v1.1`,
+    `Series: ${series} mm`,
+    `Overall: W ${document.getElementById('width').value} / LH ${document.getElementById('leftH').value} / RH ${document.getElementById('rightH').value} mm`,
+    `Rake angle: ${document.getElementById('angle').textContent}°`,
+    `Outside rake: ${document.getElementById('outerRake').textContent} mm`,
+    `HEAD: ${document.getElementById('headCut').textContent} mm — ${document.getElementById('headCall').textContent}`,
+    `SILL: ${document.getElementById('sillCut').textContent} mm — square both ends`,
+    `LH JAMB: ${document.getElementById('lhJambCut').textContent} mm — ${document.getElementById('lhCall').textContent}`,
+    `RH JAMB: ${document.getElementById('rhJambCut').textContent} mm — ${document.getElementById('rhCall').textContent}`,
+    `50 mm angle offset: ${document.getElementById('angleOffset').textContent} mm`
+  ].join('\n');
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{
+      const btn=[...document.querySelectorAll('.btn')].find(b=>b.textContent.includes('Copy'));
+      const old=btn.textContent; btn.textContent='Copied';
+      setTimeout(()=>btn.textContent=old,1000);
+    }).catch(()=>alert(txt));
+  } else {
+    alert(txt);
+  }
+}
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));
+initGlass();
+calc();
+</script>
+</body>
+</html>

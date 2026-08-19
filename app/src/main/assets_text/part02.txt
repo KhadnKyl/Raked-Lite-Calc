@@ -1,0 +1,180 @@
+an></div><span class="status derived">≈ Derived</span></div>
+          <div class="result"><div class="k">Right glass height</div><div><span id="glassRH" class="v">—</span><span class="u">mm</span></div><span class="status derived">≈ Derived</span></div>
+          <div class="result"><div class="k">Glass rake length</div><div><span id="glassRake" class="v">—</span><span class="u">mm</span></div><span class="status derived">≈ Derived</span></div>
+          <div class="result"><div class="k">Glass area</div><div><span id="glassArea" class="v">—</span><span class="u">m²</span></div><span class="status derived">≈ Derived</span></div>
+          <div class="result"><div class="k">Setting block centres</div><div id="blockLoc" class="v" style="font-size:17px">—</div><span class="status documented">✓ Documented</span></div>
+        </div>
+        <div class="small" style="margin-top:12px">
+          Glass model carried forward from v0.4: the frame boundary is inset by S on vertical sides and sill,
+          and by S perpendicular to the raked head. Defaults are S = 14 mm (52) and S = 25 mm (100).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card sourcebox">
+    <b>Workshop rules merged into this build</b><br>
+    Sill cut = overall width − 52 mm. Jamb cut lengths = entered overall jamb heights.
+    The high jamb is measured to the top long point; the low jamb is measured to the top short point.
+    Head end callouts reverse automatically when the rake reverses. The 50 mm angle offset is
+    50 × tan(rake angle), e.g. about 29.7 mm at 30.7°.<br><br>
+    <b>Manual references carried forward from v0.4</b><br>
+    ESS 52: ESS-AWN-05-09 Fixed Lite Glazing; ESS-AWN-07-02-1 Typical Frame Assembly — Fixed Lite Window;
+    ESS-AWN-06-01 standard jamb machining; ESS-AWN-07-08-1 / 07-08-2 fixed-lite glazing block &amp; bead assembly.<br>
+    SIG 100: SIG-AWN-05-08 Fixed Lite Glazing; SIG-AWN-07-02 Typical Frame Assembly — Fixed Lite;
+    SIG-AWN-06-01 standard jamb machining; SIG-AWN-07-08-1 / 07-08-2 fixed-lite glazing block &amp; bead assembly.
+  </div>
+
+  <footer>Bradnam's 52 mm &amp; 100 mm Raked Fixed Lite Calculator — Workshop v1.1</footer>
+</div>
+
+<script>
+const glassOptions = [3,4,5,6,6.38,6.5,6.76,8,8.38,8.5,8.76,10,10.38,10.5,10.76,11.52,12,12.38,12.5,12.76,13.52,14,16,18,20,22,24];
+const wedgeMap = {
+  "3":"81316 WEDGE GLAZING",
+  "4":"82131 WEDGE GLAZING (PURPLE)",
+  "5":"83945 WEDGE GLAZING (ORANGE)",
+  "6":"83946 WEDGE GLAZING (WHITE)",
+  "6.38":"83946 WEDGE GLAZING (WHITE)",
+  "6.5":"83946 WEDGE GLAZING (WHITE)",
+  "6.76":"83946 WEDGE GLAZING (WHITE)",
+  "8":"82836 WEDGE GLAZING",
+  "8.38":"82836 WEDGE GLAZING",
+  "8.5":"82836 WEDGE GLAZING",
+  "8.76":"82836 WEDGE GLAZING",
+  "10":"83945 WEDGE GLAZING (ORANGE)",
+  "10.38":"83945 WEDGE GLAZING (ORANGE)",
+  "10.5":"83945 WEDGE GLAZING (ORANGE)",
+  "10.76":"83945 WEDGE GLAZING (ORANGE)",
+  "11.52":"81315 WEDGE GLAZING",
+  "12":"83946 WEDGE GLAZING (WHITE)",
+  "12.38":"83946 WEDGE GLAZING (WHITE)",
+  "12.5":"83946 WEDGE GLAZING (WHITE)",
+  "12.76":"83946 WEDGE GLAZING (WHITE)",
+  "13.52":"83947 WEDGE GLAZING (BROWN)",
+  "14":"82836 WEDGE GLAZING",
+  "16":"83945 WEDGE GLAZING (ORANGE)",
+  "18":"83946 WEDGE GLAZING (WHITE)",
+  "20":"85766 WEDGE GLAZING",
+  "22":"83945 WEDGE GLAZING (ORANGE)",
+  "24":"83947 WEDGE GLAZING (BROWN)"
+};
+
+let series = 100;
+
+function initGlass(){
+  const s=document.getElementById('glass');
+  glassOptions.forEach(v=>{
+    const o=document.createElement('option');
+    o.value=v; o.textContent=v+' mm';
+    if(v===6.38) o.selected=true;
+    s.appendChild(o);
+  });
+}
+
+function setSeries(v){
+  series=v;
+  document.getElementById('s52').classList.toggle('active',v===52);
+  document.getElementById('s100').classList.toggle('active',v===100);
+  document.getElementById('offset').value = v===52 ? 14 : 25;
+  document.getElementById('offsetHelp').textContent =
+    `Default ${v===52?14:25} mm for ${v} series. Derived working datum; editable for testing.`;
+  calc();
+}
+
+function beadFor(t){
+  if(t<=6.76) return "BS212 (3482) — BEAD FL 4-6";
+  if(t<=12.76) return "BS213 (3483) — BEAD FL 8-12";
+  if(t<=18) return "BS214 (3484) — BEAD FL 14-18";
+  return "BS215 (3485) — BEAD FL 20-24";
+}
+function blockFor(t){
+  if(t===3) return "Not confirmed for 3 mm";
+  if(t<=6.76) return "85788 — SETTING BLOCK FL 4-6";
+  if(t<=12.76) return "85789 — SETTING BLOCK FL 8-12";
+  if(t<=18) return "85790 — SETTING BLOCK FL 14-18";
+  return "85791 — SETTING BLOCK FL 20-24";
+}
+function fmt(n,d=1){
+  return Number.isFinite(n) ? n.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
+}
+
+
+
+function drawHeadSketch(angle, signedRise, headCut){
+  const svg=document.getElementById('headSketch');
+  const cap=document.getElementById('headSketchCap');
+  const a=fmt(angle,1);
+
+  function extLine(A, B, ext){
+    const dx=B[0]-A[0], dy=B[1]-A[1];
+    const len=Math.hypot(dx,dy) || 1;
+    const ux=dx/len, uy=dy/len;
+    return [A[0]-ux*ext, A[1]-uy*ext, B[0]+ux*ext, B[1]+uy*ext];
+  }
+
+  const yTop=56, yBot=124;
+  let LT, LB, RT, RB, leftMeasure, rightMeasure, leftName, rightName, rakeName;
+
+  if(signedRise < 0){
+    // RH rake: LH high / RH low.
+    // Both mitres lean down-right.
+    LT=[54,yTop];  LB=[102,yBot];
+    RT=[234,yTop]; RB=[282,yBot];
+    leftMeasure=LT; rightMeasure=RT;
+    leftName="LONG POINT"; rightName="SHORT POINT"; rakeName="RH rake";
+  } else if(signedRise > 0){
+    // LH rake: RH high / LH low.
+    // Mirror the mitres so they lean down-left.
+    LT=[102,yTop]; LB=[54,yBot];
+    RT=[282,yTop]; RB=[234,yBot];
+    leftMeasure=LT; rightMeasure=RT;
+    leftName="SHORT POINT"; rightName="LONG POINT"; rakeName="LH rake";
+  } else {
+    LT=[78,yTop]; LB=[78,yBot];
+    RT=[258,yTop]; RB=[258,yBot];
+    leftMeasure=LT; rightMeasure=RT;
+    leftName="MEASURE"; rightName="MEASURE"; rakeName="Level head";
+  }
+
+  const LExt = extLine(LT, LB, 28);
+  const RExt = extLine(RT, RB, 28);
+
+  svg.innerHTML = `
+    <rect x="0" y="0" width="360" height="180" rx="10" fill="#101b23"/>
+
+    <polygon points="${LT[0]},${LT[1]} ${RT[0]},${RT[1]} ${RB[0]},${RB[1]} ${LB[0]},${LB[1]}"
+      fill="none" stroke="#eef7fb" stroke-width="4" stroke-linejoin="round"/>
+
+    <line x1="${LExt[0]}" y1="${LExt[1]}" x2="${LExt[2]}" y2="${LExt[3]}"
+      stroke="#7a93a2" stroke-width="2" stroke-dasharray="6 4"/>
+    <line x1="${RExt[0]}" y1="${RExt[1]}" x2="${RExt[2]}" y2="${RExt[3]}"
+      stroke="#7a93a2" stroke-width="2" stroke-dasharray="6 4"/>
+
+    <line x1="${leftMeasure[0]}" y1="32" x2="${rightMeasure[0]}" y2="32"
+      stroke="#8edff0" stroke-width="2"/>
+    <line x1="${leftMeasure[0]}" y1="26" x2="${leftMeasure[0]}" y2="38"
+      stroke="#8edff0" stroke-width="2"/>
+    <line x1="${rightMeasure[0]}" y1="26" x2="${rightMeasure[0]}" y2="38"
+      stroke="#8edff0" stroke-width="2"/>
+    <text x="${(leftMeasure[0]+rightMeasure[0])/2}" y="22" text-anchor="middle"
+      fill="#8edff0" font-size="17" font-weight="700">${fmt(headCut)} mm</text>
+
+    <circle cx="${leftMeasure[0]}" cy="${leftMeasure[1]}" r="4" fill="#8edff0"/>
+    <circle cx="${rightMeasure[0]}" cy="${rightMeasure[1]}" r="4" fill="#8edff0"/>
+
+    <line x1="${leftMeasure[0]}" y1="${leftMeasure[1]+4}" x2="${leftMeasure[0]}" y2="138"
+      stroke="#8edff0" stroke-width="1.5"/>
+    <line x1="${rightMeasure[0]}" y1="${rightMeasure[1]+4}" x2="${rightMeasure[0]}" y2="138"
+      stroke="#8edff0" stroke-width="1.5"/>
+
+    <text x="24" y="21" fill="#a9bfca" font-size="11">BLADE</text>
+    <text x="299" y="21" fill="#a9bfca" font-size="11">STOP</text>
+
+    <text x="${Math.min(LT[0],LB[0])-14}" y="96" text-anchor="middle"
+      fill="#f3c56b" font-size="12">${fmt(angle,1)}°</text>
+    <text x="${Math.max(RT[0],RB[0])+14}" y="96" text-anchor="middle"
+      fill="#f3c56b" font-size="12">${fmt(angle,1)}°</text>
+
+    <text x="${leftMeasure[0]}" y="151" text-anchor="middle" fill="#e5f4f9" font-size="11">${leftName}</text>
+    <text x="${rightMeasure[0]}" y="151" text

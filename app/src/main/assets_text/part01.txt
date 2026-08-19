@@ -1,0 +1,172 @@
+or="rightH">Right overall height (mm)</label>
+            <input id="rightH" type="number" min="1" step="0.1" value="928">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="glass">Glass thickness</label>
+          <select id="glass"></select>
+        </div>
+
+        <div class="field">
+          <label for="offset">Provisional glass edge offset S (mm)</label>
+          <input id="offset" type="number" min="0" step="0.1" value="25">
+          <div class="small" id="offsetHelp">
+            Default 25 mm for 100 series. Derived working datum; editable for testing.
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Setting block location</label>
+          <select id="blockMode">
+            <option value="70">Standard bead assembly — 70 mm from sill ends</option>
+            <option value="100">Optional bead corner components — 100 mm</option>
+          </select>
+        </div>
+
+        <div class="btnrow">
+          <button class="btn" onclick="load901()">Load 901 example</button>
+          <button class="btn" onclick="load907()">Load 907 example</button>
+          <button class="btn" onclick="swapHeights()">Swap LH / RH</button>
+          <button class="btn" onclick="copyResults()">Copy results</button>
+        </div>
+        <div id="validation" class="validation ok">Dimensions ready.</div>
+      </div>
+
+      <div class="card section">
+        <h2>Bradnam's components</h2>
+        <table>
+          <tbody>
+            <tr><th>Item</th><th>Selection</th></tr>
+            <tr><td>Frame / head &amp; sill</td><td id="framePart"></td></tr>
+            <tr><td>Jamb</td><td id="jambPart"></td></tr>
+            <tr><td>Fixed-lite bead</td><td id="beadPart"></td></tr>
+            <tr><td>Glazing wedge</td><td id="wedgePart"></td></tr>
+            <tr><td>Backing wedge</td><td>86205 WEDGE CAPTIVE</td></tr>
+            <tr><td>Setting block</td><td id="blockPart"></td></tr>
+            <tr><td>Gasket</td><td id="gasketPart"></td></tr>
+            <tr><td>Sill flap</td><td>83848 FLAP SILL</td></tr>
+            <tr><td>Std jamb crop</td><td id="cropPart"></td></tr>
+          </tbody>
+        </table>
+        <div class="small" style="margin-top:10px">
+          <span class="status documented">✓ Bradnam's documented</span>
+          Standard fixed-lite manual items carried forward from v0.4.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Shape preview</h2>
+        <div class="diagram">
+          <svg id="shape" viewBox="0 0 720 340" aria-label="Raked fixed lite diagram"></svg>
+        </div>
+        <div class="legend">
+          <span><span class="dot" style="background:#7fd3e4"></span>Overall frame</span>
+          <span><span class="dot" style="background:#f3c56b"></span>Provisional glass</span>
+        </div>
+      </div>
+
+      <div class="card section">
+        <h2>Geometry</h2>
+        <div class="results">
+          <div class="result"><div class="k">Rise</div><div><span id="rise" class="v">—</span><span class="u">mm</span></div><span class="status documented">Math</span></div>
+          <div class="result"><div class="k">Rake angle</div><div><span id="angle" class="v">—</span><span class="u">°</span></div><span class="status documented">Math</span></div>
+          <div class="result"><div class="k">Outside rake length</div><div><span id="outerRake" class="v">—</span><span class="u">mm</span></div><span class="status documented">Math</span></div>
+          <div class="result"><div class="k">Rake direction</div><div id="direction" class="v" style="font-size:17px">—</div><span class="status documented">Math</span></div>
+          <div class="result"><div class="k">Frame area</div><div><span id="frameArea" class="v">—</span><span class="u">m²</span></div><span class="status documented">Math</span></div>
+          <div class="result"><div class="k">50 mm angle offset</div><div><span id="angleOffset" class="v">—</span><span class="u">mm</span></div><span class="status confirmed">Workshop check</span></div>
+        </div>
+      </div>
+
+      <div class="card section">
+        <h2>Actual aluminium cut list &amp; directions</h2>
+        <table class="cuttable">
+          <thead>
+            <tr><th>Member</th><th>Cut size</th><th>Cutting / measuring direction</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Head</td>
+              <td><span id="headCut">—</span> mm</td>
+              <td id="headCall" class="cutcall">—</td>
+            </tr>
+            <tr>
+              <td>Sill</td>
+              <td><span id="sillCut">—</span> mm</td>
+              <td class="cutcall">Square both ends — 0° / 0°. Overall width − 52 mm.</td>
+            </tr>
+            <tr>
+              <td>LH jamb</td>
+              <td><span id="lhJambCut">—</span> mm</td>
+              <td id="lhCall" class="cutcall">—</td>
+            </tr>
+            <tr>
+              <td>RH jamb</td>
+              <td><span id="rhJambCut">—</span> mm</td>
+              <td id="rhCall" class="cutcall">—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="results" style="margin-top:12px">
+          <div class="result">
+            <div class="k">Head projected deduction</div>
+            <div><span id="headProjDed" class="v">—</span><span class="u">mm</span></div>
+            <span class="status confirmed">Current rule</span>
+          </div>
+          <div class="result">
+            <div class="k">Saw angle</div>
+            <div><span id="sawAngle" class="v">—</span><span class="u">°</span></div>
+            <span class="status confirmed">Off square</span>
+          </div>
+          <div class="result">
+            <div class="k">High / low side</div>
+            <div id="highLow" class="v" style="font-size:17px">—</div>
+            <span class="status confirmed">Auto</span>
+          </div>
+        </div>
+
+        <div class="rulebox" id="cutRuleNote">
+          Head rule: outside rake − (head deduction ÷ cos rake angle). 100 mm uses 54 mm head deduction;
+          52 mm uses 52 mm head deduction. Jamb cut lengths use the entered overall side heights.
+        </div>
+      </div>
+
+      
+      <div class="card section">
+        <h2>Cut sketches</h2>
+        <div class="small" style="margin-bottom:12px">
+          Visual saw guides in the same style as the calculator, based on your workshop sketch concept.
+          These update automatically with the rake direction and angle, with exaggerated mitres for clearer long / short point reading.
+        </div>
+        <div class="cutSketchGrid">
+          <div class="cutSketch">
+            <h3>Head cut</h3>
+            <svg id="headSketch" viewBox="0 0 360 180" aria-label="Head cut sketch"></svg>
+            <div id="headSketchCap" class="caption">—</div>
+          </div>
+          <div class="cutSketch">
+            <h3>Sill cut</h3>
+            <svg id="sillSketch" viewBox="0 0 360 180" aria-label="Sill cut sketch"></svg>
+            <div id="sillSketchCap" class="caption">—</div>
+          </div>
+          <div class="cutSketch">
+            <h3>LH jamb cut</h3>
+            <svg id="lhSketch" viewBox="0 0 360 180" aria-label="LH jamb cut sketch"></svg>
+            <div id="lhSketchCap" class="caption">—</div>
+          </div>
+          <div class="cutSketch">
+            <h3>RH jamb cut</h3>
+            <svg id="rhSketch" viewBox="0 0 360 180" aria-label="RH jamb cut sketch"></svg>
+            <div id="rhSketchCap" class="caption">—</div>
+          </div>
+        </div>
+      </div>
+
+<div class="card section">
+        <h2>Provisional raked glass</h2>
+        <div class="results">
+          <div class="result"><div class="k">Glass width</div><div><span id="glassW" class="v">—</span><span class="u">mm</span></div><span class="status derived">≈ Derived</span></div>
+          <div class="result"><div class="k">Left glass height</div><div><span id="glassLH" class="v">—</span><span class="u">mm</sp

@@ -1,0 +1,182 @@
+-anchor="middle" fill="#e5f4f9" font-size="11">${rightName}</text>
+  `;
+
+  if(signedRise < 0){
+    cap.innerHTML = `<b>${rakeName}:</b> ${fmt(headCut)} mm from <b>LH long point</b> to <b>RH short point</b>. Dashed lines show the blade / mitre line.`;
+  } else if(signedRise > 0){
+    cap.innerHTML = `<b>${rakeName}:</b> ${fmt(headCut)} mm from <b>LH short point</b> to <b>RH long point</b>. Dashed lines show the blade / mitre line.`;
+  } else {
+    cap.innerHTML = `<b>${rakeName}:</b> ${fmt(headCut)} mm, square both ends.`;
+  }
+}
+
+
+function drawSillSketch(sillCut){
+  const svg=document.getElementById('sillSketch');
+  const caption=document.getElementById('sillSketchCap');
+  svg.innerHTML = `
+    <rect x="0" y="0" width="360" height="180" rx="10" fill="#101b23"/>
+    <line x1="70" y1="55" x2="290" y2="55" stroke="#eef7fb" stroke-width="4"/>
+    <line x1="70" y1="120" x2="290" y2="120" stroke="#eef7fb" stroke-width="4"/>
+    <line x1="70" y1="55" x2="70" y2="120" stroke="#eef7fb" stroke-width="4"/>
+    <line x1="290" y1="55" x2="290" y2="120" stroke="#eef7fb" stroke-width="4"/>
+    <line x1="70" y1="34" x2="70" y2="140" stroke="#7a93a2" stroke-width="2" stroke-dasharray="6 4"/>
+    <line x1="290" y1="34" x2="290" y2="140" stroke="#7a93a2" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="180" y="42" text-anchor="middle" fill="#8edff0" font-size="17" font-weight="700">${fmt(sillCut)} mm</text>
+    <text x="180" y="157" text-anchor="middle" fill="#e5f4f9" font-size="11">SQUARE / 0° BOTH ENDS</text>
+  `;
+  caption.textContent = `Sill cut size ${fmt(sillCut)} mm. Square both ends. Overall width − 52 mm.`;
+}
+
+
+function drawJambSketch(svgId, capId, side, length, angle, topIsLong){
+  const svg=document.getElementById(svgId);
+  const cap=document.getElementById(capId);
+
+  function extLine(A, B, ext){
+    const dx=B[0]-A[0], dy=B[1]-A[1];
+    const len=Math.hypot(dx,dy) || 1;
+    const ux=dx/len, uy=dy/len;
+    return [A[0]-ux*ext, A[1]-uy*ext, B[0]+ux*ext, B[1]+uy*ext];
+  }
+
+  const yTop=58, yBot=126, rightX=288;
+  const leftTopX = topIsLong ? 50 : 104;
+  const leftBotX = topIsLong ? 104 : 50;
+  const pointName = topIsLong ? "LONG POINT" : "SHORT POINT";
+
+  const A=[leftTopX,yTop], B=[leftBotX,yBot];
+  const E=extLine(A,B,28);
+
+  svg.innerHTML = `
+    <rect x="0" y="0" width="360" height="180" rx="10" fill="#101b23"/>
+
+    <polygon points="${A[0]},${A[1]} ${rightX},${yTop} ${rightX},${yBot} ${B[0]},${B[1]}"
+      fill="none" stroke="#eef7fb" stroke-width="4" stroke-linejoin="round"/>
+
+    <line x1="${E[0]}" y1="${E[1]}" x2="${E[2]}" y2="${E[3]}"
+      stroke="#7a93a2" stroke-width="2" stroke-dasharray="6 4"/>
+
+    <line x1="${A[0]}" y1="34" x2="${rightX}" y2="34"
+      stroke="#8edff0" stroke-width="2"/>
+    <line x1="${A[0]}" y1="28" x2="${A[0]}" y2="40"
+      stroke="#8edff0" stroke-width="2"/>
+    <line x1="${rightX}" y1="28" x2="${rightX}" y2="40"
+      stroke="#8edff0" stroke-width="2"/>
+    <text x="${(A[0]+rightX)/2}" y="24" text-anchor="middle"
+      fill="#8edff0" font-size="17" font-weight="700">${fmt(length)} mm</text>
+
+    <circle cx="${A[0]}" cy="${A[1]}" r="4" fill="#8edff0"/>
+    <line x1="${A[0]}" y1="${A[1]+4}" x2="${A[0]}" y2="138" stroke="#8edff0" stroke-width="1.5"/>
+
+    <text x="${Math.min(A[0],B[0])-14}" y="97" text-anchor="middle"
+      fill="#f3c56b" font-size="12">${fmt(angle,1)}°</text>
+
+    <text x="${A[0]}" y="151" text-anchor="middle" fill="#e5f4f9" font-size="11">${pointName}</text>
+    <text x="176" y="166" text-anchor="middle" fill="#e5f4f9" font-size="11">BOTTOM SQUARE / 0°</text>
+  `;
+
+  cap.innerHTML = `<b>${side} jamb:</b> ${fmt(length)} mm from square bottom to top <b>${pointName.toLowerCase()}</b>. Dashed line shows the blade / mitre line.`;
+}
+
+
+function renderCutSketches(angle, signedRise, headCut, sillCut, LH, RH){
+  const isRHRake = signedRise < 0;
+  drawHeadSketch(angle, signedRise, headCut);
+  drawSillSketch(sillCut);
+  if(signedRise === 0){
+    drawJambSketch('lhSketch','lhSketchCap','LH',LH,0,true);
+    drawJambSketch('rhSketch','rhSketchCap','RH',RH,0,true);
+  } else if(isRHRake){
+    drawJambSketch('lhSketch','lhSketchCap','LH',LH,angle,true);
+    drawJambSketch('rhSketch','rhSketchCap','RH',RH,angle,false);
+  } else {
+    drawJambSketch('lhSketch','lhSketchCap','LH',LH,angle,false);
+    drawJambSketch('rhSketch','rhSketchCap','RH',RH,angle,true);
+  }
+}
+
+
+function calc(){
+  const W=+document.getElementById('width').value;
+  const LH=+document.getElementById('leftH').value;
+  const RH=+document.getElementById('rightH').value;
+  const S=+document.getElementById('offset').value;
+  const t=+document.getElementById('glass').value;
+  const blockMode=+document.getElementById('blockMode').value;
+
+  if(!(W>0&&LH>0&&RH>0&&S>=0)){
+    setValidation("Enter positive frame dimensions.", "bad");
+    return;
+  }
+
+  const signedRise=RH-LH;
+  const rise=Math.abs(signedRise);
+  const m=signedRise/W;
+  const q=Math.sqrt(1+m*m);
+  const angleRad=Math.atan(Math.abs(m));
+  const angle=angleRad*180/Math.PI;
+  const cosA=Math.cos(angleRad);
+  const outerRake=Math.hypot(W,rise);
+  const frameArea=W*(LH+RH)/2/1e6;
+
+  // Current workshop fabrication rules.
+  const sillCut=W-52;
+  const headBaseDeduction=series===100 ? 54 : 52;
+  const headProjDed=headBaseDeduction/cosA;
+  const headCut=outerRake-headProjDed;
+  const angleOffset=50*Math.tan(angleRad);
+
+  // Jamb cut lengths remain the entered overall side heights.
+  const lhJambCut=LH;
+  const rhJambCut=RH;
+
+  // v0.4 provisional glass model.
+  const GW=W-2*S;
+  const GLH=LH + m*S - S*q - S;
+  const GRH=RH - m*S - S*q - S;
+  const GR=GW*q;
+  const glassArea=GW*(GLH+GRH)/2/1e6;
+
+  document.getElementById('rise').textContent=fmt(rise);
+  document.getElementById('angle').textContent=fmt(angle,2);
+  document.getElementById('outerRake').textContent=fmt(outerRake);
+  document.getElementById('frameArea').textContent=fmt(frameArea,3);
+  document.getElementById('angleOffset').textContent=fmt(angleOffset);
+  document.getElementById('sawAngle').textContent=fmt(angle,1);
+  document.getElementById('headProjDed').textContent=fmt(headProjDed);
+  document.getElementById('sillCut').textContent=fmt(sillCut);
+  document.getElementById('headCut').textContent=fmt(headCut);
+  document.getElementById('lhJambCut').textContent=fmt(lhJambCut);
+  document.getElementById('rhJambCut').textContent=fmt(rhJambCut);
+
+  document.getElementById('direction').textContent =
+    signedRise>0 ? "Low left → high right" :
+    signedRise<0 ? "High left → low right" : "Level head";
+
+  if(signedRise < 0){
+    // LH high / RH low = RH rake
+    document.getElementById('highLow').textContent="LH high / RH low";
+    document.getElementById('headCall').textContent =
+      `RH rake: LEFT LONG POINT → RIGHT SHORT POINT. Both head end cuts ${fmt(angle,1)}° in the same direction.`;
+    document.getElementById('lhCall').textContent =
+      `Square bottom → top LONG POINT. Top cut ${fmt(angle,1)}°.`;
+    document.getElementById('rhCall').textContent =
+      `Square bottom → top SHORT POINT. Top cut ${fmt(angle,1)}° opposite the LH jamb.`;
+  } else if(signedRise > 0){
+    // RH high / LH low = LH rake
+    document.getElementById('highLow').textContent="RH high / LH low";
+    document.getElementById('headCall').textContent =
+      `LH rake: LEFT SHORT POINT → RIGHT LONG POINT. Both head end cuts ${fmt(angle,1)}° in the same direction.`;
+    document.getElementById('lhCall').textContent =
+      `Square bottom → top SHORT POINT. Top cut ${fmt(angle,1)}°.`;
+    document.getElementById('rhCall').textContent =
+      `Square bottom → top LONG POINT. Top cut ${fmt(angle,1)}° opposite the LH jamb.`;
+  } else {
+    document.getElementById('highLow').textContent="Level";
+    document.getElementById('headCall').textContent="Level head — square both ends.";
+    document.getElementById('lhCall').textContent="Square bottom and top.";
+    document.getElementById('rhCall').textContent="Square bottom and top.";
+  }
+
+  document.getElementById('cutRuleNote').inn
