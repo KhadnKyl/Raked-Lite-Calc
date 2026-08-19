@@ -18,12 +18,13 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Reconstruct calculator HTML
+      - name: Reconstruct and verify calculator HTML
         shell: bash
         run: |
           mkdir -p app/src/main/assets
-          cat app/src/main/assets_parts/part*.b64 | tr -d '\n\r ' | base64 -d > app/src/main/assets/index.html
+          cat app/src/main/assets_text/part*.txt > app/src/main/assets/index.html
           test -s app/src/main/assets/index.html
+          echo "1af556b7be22a543e2690256d8a06b73660ecfd62affebf4628c4fc106569a0d  app/src/main/assets/index.html" | sha256sum -c -
           grep -q "Bradnam's 52mm & 100mm Raked Fixed Lite Calculator" app/src/main/assets/index.html
 
       - name: Set up Java 17
